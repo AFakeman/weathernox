@@ -30,6 +30,16 @@ DATA_TYPE_CHOICES = [
     'obl???',
 ]
 
+DEFAULT_FILENAMES = [
+    'temp.csv',
+    'slp.csv',
+    'oxyg.csv',
+    'hum.csv',
+    'wind.csv',
+    'soil.csv',
+    'obl.csv',
+]
+
 
 class CitySelectParser(HTMLParser):
     SELECT_ID = "id_select_town"
@@ -72,7 +82,7 @@ def fetch_available_cities():
     return parser.cities
 
 
-def fetch_weather_data(data_type, wmo=29638, city='novosibirsk'):
+def fetch_weather_data(data_type, wmo, city):
     DATA_URL = "http://www.atlas-yakutia.ru/weather/load_js_2018.php"
 
     # These parameters are not expected to change, so they are made constant
@@ -83,15 +93,10 @@ def fetch_weather_data(data_type, wmo=29638, city='novosibirsk'):
     COLOR_DEPTH = 24
 
     HEADERS = {
-        'Content-Type': "application/x-www-form-urlencoded; charset=UTF-8",
-        'Host': "www.atlas-yakutia.ru",
-        'Origin': "http://www.atlas-yakutia.ru",
-        'Referer': "http://www.atlas-yakutia.ru/weather/wind/climate_russia-III_wind_2018.html",
         'User-Agent': 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like'\
         'Gecko) Chrome/68.0.3440.84 Safari/537.36',
     }
 
-    data_type = "Wind_mean_Wind_min_Wind_max"
     request_data = "{}={},{},1965,2017,{},{},{},{},{}".format(POST_DATA_FIELD, wmo, data_type, SCREEN_WIDTH,
             SCREEN_HEIGHT, USER_AGENT, COLOR_DEPTH, city)
     req = urllib.request.Request(DATA_URL, data=request_data.encode('UTF-8'), headers=HEADERS)
@@ -170,13 +175,14 @@ def main():
     data_type = DATA_TYPES[idx]
     print('Fetching weather data...')
     try:
-        response = fetch_weather_data(city_wmo, city_name)
+        response = fetch_weather_data(data_type, city_wmo, city_name)
     except urllib.error.HTTPError:
         print('Could not fetch the weather data :(')
         exit(1)
-    filename = input("Pick output file name [out.csv]: ")
+    default_filename = DEFAULT_FILENAMES[idx]
+    filename = input("Pick output file name [{}]: ".format(default_filename))
     if filename == '':
-        filename = 'out.csv'
+        filename = default_filename
     data_to_csv(response.read().decode('UTF-8'), filename=filename)
     print("Saved data to {}".format(filename))
 
